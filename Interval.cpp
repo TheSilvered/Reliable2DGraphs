@@ -39,6 +39,16 @@ static inline double div_down(double a, double b) {
     return a / b;
 }
 
+static inline double sqrt_up(double x) {
+    fesetround(FE_UPWARD);
+    return sqrt(x);
+}
+
+static inline double sqrt_down(double x) {
+    fesetround(FE_DOWNWARD);
+    return sqrt(x);
+}
+
 constexpr double min4(double a, double b, double c, double d) {
     if (a < b && a < c && a < d)
         return a;
@@ -77,15 +87,27 @@ IBool IBool::operator&&(const IBool& other) {
     return IBool(m_lower && other.m_lower, m_upper && other.m_upper);
 }
 
-std::ostream& operator<<(std::ostream &out, IVal val) {
-    if (val.domain().isFalse())
-        out << "[]";
-    else if (val.domain().isTrue())
-        out << '[' << val.lower() << ", " << val.upper() << ']';
-    else
-        out << "([" << val.lower() << ", " << val.upper() << "])";
-    return out;
+IVal::IVal(double lower, double upper) : m_domain(true) {
+    if (upper < lower) {
+        m_lower = upper;
+        m_upper = lower;
+    } else {
+        m_lower = lower;
+        m_upper = upper;
+    }
 }
+
+IVal::IVal(double lower, double upper, IBool domain) : m_domain(domain) {
+    if (upper < lower) {
+        m_lower = upper;
+        m_upper = lower;
+    } else {
+        m_lower = lower;
+        m_upper = upper;
+    }
+}
+
+IVal::IVal(double value) : m_lower(value), m_upper(value), m_domain(true) {}
 
 // Arithmetic operators
 
@@ -118,17 +140,17 @@ IVal operator*(IVal lhs, IVal rhs) {
     if (domain.isFalse())
         return i_undefined;
 
-    double a = lhs.lower();
-    double b = lhs.upper();
-    double c = rhs.lower();
-    double d = rhs.upper();
+    double x1 = lhs.lower();
+    double y1 = lhs.upper();
+    double x2 = rhs.lower();
+    double y2 = rhs.upper();
 
-    if (a >= 0 && b >= 0)
-        return IVal(mul_down(a, c), mul_up(b, d), domain);
+    if ((x1 >= 0 && x2 >= 0) || (x1 <= 0 && x2 <= 0))
+        return IVal(mul_down(x1, x2), mul_up(y1, y2), domain);
 
     return IVal(
-        min4(mul_down(a, c), mul_down(a, d), mul_down(b, c), mul_down(b, d)),
-        max4(mul_up(a, c), mul_up(a, d), mul_up(b, c), mul_up(b, d)),
+        min4(mul_down(x1, x2), mul_down(x1, y2), mul_down(y1, x2), mul_down(y1, y2)),
+        max4(mul_up(x1, x2), mul_up(x1, y2), mul_up(y1, x2), mul_up(y1, y2)),
         domain
     );
 }
@@ -227,4 +249,38 @@ IBool operator!=(IVal lhs, IVal rhs) {
         return IBool(false);
 
     return !(lhs == rhs);
+}
+
+// Functions
+
+IVal sqrt(IVal val) {
+    if (val.domain().isFalse())
+        return val;
+
+    if (val.upper() < 0)
+        return i_undefined;
+    else if (val.lower() >= 0)
+        return IVal(sqrt_down(val.lower()), sqrt_up(val.upper()), val.domain());
+    return IVal(0, sqrt_up(val.upper()), { false, true });
+}
+
+IVal abs(IVal val) {
+    if (val.domain().isFalse())
+        return val;
+
+    if (val.upper() <= 0)
+        return IVal(-val.upper(), -val.lower(), val.domain());
+    else if (val.lower() >= 0)
+        return val;
+    return IVal(0, val.upper(), val.domain());
+}
+
+std::ostream& operator<<(std::ostream &out, IVal val) {
+    if (val.domain().isFalse())
+        out << "[]";
+    else if (val.domain().isTrue())
+        out << '[' << val.lower() << ", " << val.upper() << ']';
+    else
+        out << "([" << val.lower() << ", " << val.upper() << "])";
+    return out;
 }

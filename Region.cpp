@@ -1,9 +1,12 @@
+#include <cfenv>
 #include "Region.h"
 
 Region::Region(int x, int y, int side, Viewport vp)
     : m_x(x), m_y(y), m_side(side), m_vp(vp) {}
 
 PlaneRegion Region::planeRegion() {
+    fesetround(FE_TONEAREST);
+
     int l = this->m_x, t = this->m_y;
     int r = l + this->m_side, b = t + this->m_side;
     IVal x_interval = { this->m_vp.xToPlane(l), this->m_vp.xToPlane(r) };

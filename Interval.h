@@ -24,21 +24,17 @@ private:
 
 class IVal {
 public:
-    IVal(double lower, double upper)
-        : m_lower(lower), m_upper(upper), m_domain(true) {}
-    IVal(double lower, double upper, IBool domain)
-        : m_lower(lower), m_upper(upper), m_domain(domain) {}
-
-    IVal(double value)
-        : m_lower(value), m_upper(value), m_domain(true) {}
+    IVal(double lower, double upper);
+    IVal(double lower, double upper, IBool domain);
+    IVal(double value);
 
     double lower() { return m_lower; }
     double upper() { return m_upper; }
     IBool domain() { return m_domain; }
 
 private:
-    const double m_lower, m_upper;
-    const IBool m_domain;
+    double m_lower, m_upper;
+    IBool m_domain;
 };
 
 const IVal i_undefined = IVal(0.0, 0.0, {false, false});
@@ -58,6 +54,11 @@ IBool operator<(IVal lhs, IVal rhs);
 IBool operator<=(IVal lhs, IVal rhs);
 IBool operator==(IVal lhs, IVal rhs);
 IBool operator!=(IVal lhs, IVal rhs);
+
+// Functions
+
+IVal sqrt(IVal val);
+IVal abs(IVal val);
 
 // IO streams
 

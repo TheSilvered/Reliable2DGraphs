@@ -7,7 +7,7 @@
 using namespace std;
 
 IBool func(IVal x, IVal y) {
-    return x * x > y;
+    return abs(x) == y;
 }
 
 void update_regions(std::queue<Region> &regions, Image* img) {
@@ -64,10 +64,10 @@ int main()
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        if (IsKeyPressed(KEY_P))
+        if (IsKeyPressed(KEY_SPACE))
             isPlaying = !isPlaying;
 
-        if (isPlaying || IsKeyPressed(KEY_SPACE) || IsKeyPressedRepeat(KEY_SPACE))
+        if (isPlaying || IsKeyPressed(KEY_RIGHT) || IsKeyPressedRepeat(KEY_RIGHT))
             update_regions(regions, &img);
 
         Texture2D tex = LoadTextureFromImage(img);
@@ -80,6 +80,11 @@ int main()
 
             DrawRectangleLines(x - 1, y - 1, w + 2, h + 2, YELLOW);
             DrawRectangleLines(x - 2, y - 2, w + 4, h + 4, BLACK);
+
+            if (IsKeyPressed(KEY_L)) {
+                PlaneRegion planeRegion = topRegion.planeRegion();
+                cout << "x: " << planeRegion.x << ", y: " << planeRegion.y << endl;
+            }
         }
 
         EndDrawing();
